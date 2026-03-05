@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Stick Dungeon Playable</title>
+<style>
+body{
+margin:0;
+background:#111;
+overflow:hidden;
+}
+
+canvas{
+background:#1a1a1a;
+display:block;
+margin:auto;
+}
+
+#ui{
+position:absolute;
+top:10px;
+left:10px;
+color:white;
+font-family:Arial;
+}
+</style>
+</head>
+<body>
+
+<div id="ui">
+<div>HP: <span id="hpText">100</span></div>
+<div>Zona: <span id="zoneText">1</span></div>
+</div>
+
+<canvas id="game" width="800" height="500"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let keys = {};
+document.addEventListener("keydown", e=>keys[e.key]=true);
+document.addEventListener("keyup", e=>keys[e.key]=false);
+
+let player = {
+x:100,
+y:200,
+size:30,
+speed:4,
+hp:100,
+attacking:false
+};
+
+let enemy = {
+x:600,
+y:200,
+size:30,
+speed:2,
+hp:50
+};
+
+let zone = 1;
+
+function gameLoop(){
+update();
+draw();
+requestAnimationFrame(gameLoop);
+}
+
+function update(){
+
+// Movimiento
+if(keys["w"] || keys["ArrowUp"]) player.y -= player.speed;
+if(keys["s"] || keys["ArrowDown"]) player.y += player.speed;
+if(keys["a"] || keys["ArrowLeft"]) player.x -= player.speed;
+if(keys["d"] || keys["ArrowRight"]) player.x += player.speed;
+
+// Ataque
+if(keys[" "]){
+player.attacking = true;
+setTimeout(()=>player.attacking=false,200);
+}
+
+// Enemigo sigue al jugador
+let dx = player.x - enemy.x;
+let dy = player.y - enemy.y;
+let dist = Math.sqrt(dx*dx + dy*dy);
+
+if(dist > 5){
+enemy.x += dx/dist * enemy.speed;
+enemy.y += dy/dist * enemy.speed;
+}
+
+// Colisión daño
+if(dist < player.size){
+player.hp -= 0.3;
+}
+
+// Golpear enemigo
+if(player.attacking && dist < 60){
+enemy.hp -= 1;
+}
+
+// Enemigo muere
+if(enemy.hp <= 0){
+zone++;
+document.getElementById("zoneText").innerText = zone;
+enemy.hp = 50 + zone*10;
+enemy.x = 700;
+enemy.y = Math.random()*400;
+}
+
+if(player.hp <= 0){
+alert("Has muerto");
+location.reload();
+}
+
+document.getElementById("hpText").innerText = Math.floor(player.hp);
+}
+
+function draw(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+// Player
+ctx.fillStyle = player.attacking ? "yellow" : "white";
+ctx.fillRect(player.x, player.y, player.size, player.size);
+
+// Enemy
+ctx.fillStyle = "red";
+ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
+}
+
+gameLoop();
+</script>
+
+</body>
+  </html>
